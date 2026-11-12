@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'cadastro_page.dart';
+import '../home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -9,7 +11,78 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // 1. Controladores de texto para os campos de e-mail e senha
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _senhaController = TextEditingController();
+
   bool _ocultarSenha = true;
+  bool _ocultarConfirmarSenha = true;
+
+  // 2. Limpar os controladores da memória quando a tela for fechada
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _senhaController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildTextField({
+    required String hint,
+    required TextEditingController controller,
+    bool isPassword = false,
+    bool? obscureText,
+    VoidCallback? onToggleVisibility,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: TextFormField(
+        controller: controller, // <- Conecta o controlador ao campo
+        obscureText: isPassword ? (obscureText ?? true) : false,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: Colors.black.withValues(alpha: 0.2),
+          hintText: hint,
+          hintStyle: const TextStyle(color: Colors.white70),
+          // Lógica do ícone à direita:
+          suffixIcon: isPassword
+              // Se for senha, mostra o olho
+              ? IconButton(
+                  icon: Icon(
+                    (obscureText ?? true)
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: Colors.white54,
+                    size: 20,
+                  ),
+                  onPressed: onToggleVisibility,
+                )
+              // Se não for senha, mostra o botão de limpar (X)
+              : IconButton(
+                  icon: const Icon(Icons.cancel_outlined, color: Color(0xFF86FA43), size: 20),
+                  onPressed: () {
+                    controller.clear(); // <- Ação que apaga o texto
+                  },
+                ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: const Color(0xFF86FA43).withValues(alpha: 0.4),
+              width: 1.2,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Color(0xFF86FA43),
+              width: 1.8,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,60 +138,23 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 32),
 
                         // Campo E-mail (Sem ícone à esquerda, borda neon ativa)
-                        TextFormField(
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.black.withValues(alpha: 0.2),
-                            hintText: 'E-mail',
-                            hintStyle: const TextStyle(color: Colors.white70),
-                            suffixIcon: const Icon(Icons.cancel_outlined, color: Color(0xFF86FA43), size: 20),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(color: Color(0xFF86FA43).withValues(alpha: 0.4), width: 1.2),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: Color(0xFF86FA43), width: 1.8),
-                            ),
-                          ),
+                        _buildTextField(
+                          hint: 'E-mail',
+                          controller: _emailController,
                         ),
-                        const SizedBox(height: 16),
 
                         // Campo Senha (Sem ícone à esquerda, borda suave)
-                        TextFormField(
+                        _buildTextField(
+                          hint: 'Senha',
+                          controller: _senhaController,
+                          isPassword: true,
                           obscureText: _ocultarSenha,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.black.withValues(alpha: 0.2),
-                            hintText: 'Senha',
-                            hintStyle: const TextStyle(color: Colors.white70),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _ocultarSenha ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                color: Colors.white54,
-                                size: 20,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _ocultarSenha = !_ocultarSenha;
-                                });
-                              },
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(color: Color(0xFF86FA43).withValues(alpha: 0.4), width: 1.2),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: Color(0xFF86FA43), width: 1.8),
-                            ),
-                          ),
+                          onToggleVisibility: () {
+                            setState(() {
+                              _ocultarSenha = !_ocultarSenha;
+                            });
+                          },
                         ),
-                        const SizedBox(height: 28),
 
                         // Botão Gradiente Neon (Pill Shape)
                         Container(
@@ -147,7 +183,11 @@ class _LoginPageState extends State<LoginPage> {
                                 borderRadius: BorderRadius.circular(26),
                               ),
                             ),
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.pushReplacement(context,
+                              MaterialPageRoute(builder: (context) => const HomePage()),
+                            );
+                            },
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -169,7 +209,14 @@ class _LoginPageState extends State<LoginPage> {
 
                         // Texto de Cadastro
                         GestureDetector(
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CadastroPage(),
+                              ),
+                            );
+                          },
                           
                           child: RichText(
                             text: TextSpan(
