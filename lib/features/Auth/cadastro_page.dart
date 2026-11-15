@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../service/authservice.dart';
+import 'login_page.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
@@ -14,6 +16,7 @@ class _CadastroPageState extends State<CadastroPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
   final TextEditingController _confirmarSenhaController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   bool _ocultarSenha = true;
   bool _ocultarConfirmarSenha = true;
@@ -193,10 +196,29 @@ class _CadastroPageState extends State<CadastroPage> {
                                 borderRadius: BorderRadius.circular(26),
                               ),
                             ),
-                            onPressed: () {
-                              // Agora você pode acessar o que o usuário digitou usando:
-                              // _emailController.text
-                              // _senhaController.text
+                            onPressed: () async {
+                              final result = await _authService.criarUsuario(
+                                _emailController.text,
+                                _senhaController.text,
+                                _confirmarSenhaController.text,
+                                _nomeController.text
+                              );
+
+                              if (result == 'Usuário criado com sucesso!') {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginPage(),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(result ?? 'Erro ao criar usuário.'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             },
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,

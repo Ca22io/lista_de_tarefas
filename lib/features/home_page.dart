@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'Auth/login_page.dart';
 import 'calendar_page.dart';
 
+import '../service/authservice.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -13,9 +16,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
   bool _mostrarPendentes = true;
   DateTime _dataSelecionada = DateTime.now().toLocal();
+
   final TextEditingController _novaTarefaController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   final List<String> _tarefas = [
     'Estudar Flutter para o trabalho',
@@ -227,6 +233,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Captura o usuário logado e define um fallback caso venha nulo/vazio
+    final user = FirebaseAuth.instance.currentUser;
+    final String nomeUsuario = (user?.displayName != null && user!.displayName!.isNotEmpty)
+        ? user.displayName!
+        : 'Usuário';
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -265,9 +276,9 @@ class _HomePageState extends State<HomePage> {
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
                               ).createShader(bounds),
-                              child: const Text(
-                                'Usuário teste',
-                                style: TextStyle(
+                              child: Text(
+                                nomeUsuario,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -338,7 +349,10 @@ class _HomePageState extends State<HomePage> {
                               child: IconButton(
                                 tooltip: 'Sair',
                                 padding: EdgeInsets.zero,
-                                onPressed: _deslogar,
+                                onPressed: () async {
+                                  await _authService.logout();
+                                  _deslogar();
+                                },
                                 icon: const Icon(
                                   Icons.logout_rounded,
                                   color: Colors.white70,

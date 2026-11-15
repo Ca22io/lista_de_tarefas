@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key, required this.dataInicial});
 
@@ -82,6 +84,11 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildCabecalho() {
+    // Captura o usuário logado e define um fallback caso venha nulo/vazio
+    final user = FirebaseAuth.instance.currentUser;
+    final String nomeUsuario = (user?.displayName != null && user!.displayName!.isNotEmpty)
+        ? user.displayName!
+        : 'Usuário';
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -116,8 +123,8 @@ class _CalendarPageState extends State<CalendarPage> {
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ).createShader(bounds),
-                    child: const Text(
-                      'Usuário teste',
+                    child: Text(
+                      nomeUsuario,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,

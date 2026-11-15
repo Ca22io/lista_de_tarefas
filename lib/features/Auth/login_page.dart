@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'cadastro_page.dart';
 import '../home_page.dart';
+import '../../service/authservice.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,6 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   // 1. Controladores de texto para os campos de e-mail e senha
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   bool _ocultarSenha = true;
   bool _ocultarConfirmarSenha = true;
@@ -184,9 +186,23 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             onPressed: () {
-                              Navigator.pushReplacement(context,
-                              MaterialPageRoute(builder: (context) => const HomePage()),
-                            );
+                              // Chama o serviço de autenticação para login
+                              _authService.login(_emailController.text, _senhaController.text).then((user) {
+                                if (user != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Login realizado com sucesso!')),
+                                  );
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const HomePage()),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Falha no login. Verifique suas credenciais.')),
+                                  );
+                                }
+                              });
+                              
                             },
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
