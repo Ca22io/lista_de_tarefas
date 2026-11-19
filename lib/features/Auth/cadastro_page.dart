@@ -11,7 +11,7 @@ class CadastroPage extends StatefulWidget {
 }
 
 class _CadastroPageState extends State<CadastroPage> {
-  // 1. Criar os controladores para gerenciar o texto de cada campo
+  // 1. Cria os controladores para gerenciar o texto de cada campo
   final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
@@ -30,7 +30,7 @@ class _CadastroPageState extends State<CadastroPage> {
     super.dispose();
   }
 
-  // 3. Atualizar a função auxiliar para receber o controller
+  // 3. Função auxiliar para receber o controller
   Widget _buildTextField({
     required String hint,
     required TextEditingController controller,

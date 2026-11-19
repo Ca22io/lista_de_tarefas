@@ -47,13 +47,12 @@ class FirestoreService {
       return const Stream.empty();
     }
 
-    // Como já estamos dentro da coleção da data e do usuário, só filtramos por 'concluida'
     return _getColecaoPorData(data)
         .where('concluida', isEqualTo: concluida)
         .snapshots();
   }
 
-  // 3. Alternar status (agora precisa saber a 'data' para achar a coleção certa)
+  // 3. Alternar status
   Future<void> alternarStatusTarefa({
     required String docId,
     required bool statusAtual,
@@ -64,7 +63,7 @@ class FirestoreService {
     });
   }
 
-  // 4. Excluir tarefa (agora precisa saber a 'data' para achar a coleção certa)
+  // 4. Excluir tarefa
   Future<void> excluirTarefa({
     required String docId,
     required String data,
