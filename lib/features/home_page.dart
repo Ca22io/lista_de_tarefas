@@ -155,6 +155,7 @@ class _HomePageState extends State<HomePage> {
                                   titulo: texto,
                                   data: _formatarData(_dataSelecionada),
                                 );
+                                _novaTarefaController.clear();
                                 Navigator.pop(context);
                               }
                             },
