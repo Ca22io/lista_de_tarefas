@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import 'Auth/login_page.dart';
@@ -7,6 +8,8 @@ import 'calendar_page.dart';
 
 import '../service/authservice.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import '../service/FirestoreService.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,19 +19,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final FirestoreService _firestoreService = FirestoreService();
 
   bool _mostrarPendentes = true;
   DateTime _dataSelecionada = DateTime.now().toLocal();
 
   final TextEditingController _novaTarefaController = TextEditingController();
   final AuthService _authService = AuthService();
-
-  final List<String> _tarefas = [
-    'Estudar Flutter para o trabalho',
-    'Revisar lista de exercícios',
-    'Implementar Firebase',
-    'Academia',
-  ];
 
   @override
   void dispose() {
@@ -153,10 +150,11 @@ class _HomePageState extends State<HomePage> {
                             ),
                             onPressed: () {
                               if (_novaTarefaController.text.isNotEmpty) {
-                                setState(() {
-                                  _tarefas.add(_novaTarefaController.text);
-                                });
-                                _novaTarefaController.clear();
+                                final texto = _novaTarefaController.text.trim();
+                                _firestoreService.adicionarTarefa(
+                                  titulo: texto,
+                                  data: _formatarData(_dataSelecionada),
+                                );
                                 Navigator.pop(context);
                               }
                             },
@@ -444,50 +442,90 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 24),
 
                   Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 80),
-                      itemCount: _tarefas.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildGlassContainer(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ), // Ajustado vertical para compensar o tamanho do botão
-                            borderRadius: 12,
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.check_box_outline_blank,
-                                  color: Colors.white70,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    _tarefas[index],
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ),
-                                // Botão de lixeira funcional adicionado
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    color: Colors.redAccent,
-                                    size: 22,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _tarefas.removeAt(index);
-                                    });
-                                  },
-                                ),
-                              ],
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: _firestoreService.getTarefasStream(
+                        concluida: !_mostrarPendentes,
+                        data: _formatarData(_dataSelecionada),
+                      ),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(color: Color(0xFF86FA43)),
+                          );
+                        }
+
+                        if (snapshot.hasError) {
+                          return const Center(
+                            child: Text(
+                              'Erro ao carregar tarefas.',
+                              style: TextStyle(color: Colors.redAccent),
                             ),
-                          ),
+                          );
+                        }
+
+                        final docs = snapshot.data?.docs ?? [];
+
+                        if (docs.isEmpty) {
+                          return Center(
+                            child: Text(
+                              _mostrarPendentes
+                                  ? 'Nenhuma tarefa pendente para esta data.'
+                                  : 'Nenhuma tarefa concluída para esta data.',
+                              style: const TextStyle(color: Colors.white54, fontSize: 14),
+                            ),
+                          );
+                        }
+
+                        return ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 80),
+                          itemCount: docs.length,
+                          itemBuilder: (context, index) {
+                            final doc = docs[index];
+                            final data = doc.data() as Map<String, dynamic>;
+                            final String titulo = data['titulo'] ?? '';
+                            final bool concluida = data['concluida'] ?? false;
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: _buildGlassContainer(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                borderRadius: 12,
+                                child: Row(
+                                  children: [
+                                    // Checkbox funcional para mover entre Pendentes e Concluídos
+                                    GestureDetector(
+                                      onTap: () => _firestoreService.alternarStatusTarefa(docId: doc.id, 
+                                      statusAtual: concluida, 
+                                      data: _formatarData(_dataSelecionada)),
+                                      child: Icon(
+                                        concluida ? Icons.check_box : Icons.check_box_outline_blank,
+                                        color: concluida ? const Color(0xFF86FA43) : Colors.white70,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        titulo,
+                                        style: TextStyle(
+                                          color: concluida ? Colors.white54 : Colors.white,
+                                          fontSize: 15,
+                                          decoration: concluida ? TextDecoration.lineThrough : null,
+                                        ),
+                                      ),
+                                    ),
+                                    // Botão de lixeira conectado ao Firestore
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
+                                      onPressed: () => _firestoreService.excluirTarefa(
+                                        docId: doc.id,
+                                        data: _formatarData(_dataSelecionada),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
